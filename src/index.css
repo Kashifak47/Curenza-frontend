@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* Custom theme colors for the trading terminal */
+@theme {
+  --color-dark-900: #0b0e14;
+  --color-dark-800: #141824;
+  --color-dark-700: #232936;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-dark-900);
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+}
+
+/* Add this to the bottom of src/index.css */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+/* Add to bottom of src/index.css */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out forwards;
+}
+/* Add to bottom of src/index.css */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes shrinkWidth {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-toast-desktop {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-toast-mobile {
+  animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-progress {
+  animation: shrinkWidth 4s linear forwards; /* Matches the 4000ms in Context */
+}
+/* Add to bottom of src/index.css */
+@keyframes priceFlashUp {
+  0% { background-color: rgba(16, 185, 129, 0.4); color: #fff; }
+  100% { background-color: transparent; color: inherit; }
+}
+@keyframes priceFlashDown {
+  0% { background-color: rgba(244, 63, 94, 0.4); color: #fff; }
+  100% { background-color: transparent; color: inherit; }
+}
+.animate-tick-up { animation: priceFlashUp 0.6s ease-out; }
+.animate-tick-down { animation: priceFlashDown 0.6s ease-out; }
+/* Add to the bottom of src/index.css */
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+@keyframes floatDelayed {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(20px) scale(0.95); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-float-delayed { animation: floatDelayed 7s ease-in-out infinite; }
