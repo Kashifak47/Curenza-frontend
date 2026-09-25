@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
 import { useTrading } from '../context/TradingContext';
+import { ChevronDown, BarChart2, CandlestickChart, Clock, Maximize } from 'lucide-react';
 
 const TIMEFRAMES = [
   { label: '10S', seconds: 10 },
@@ -25,7 +26,7 @@ export const ChartWindow = () => {
     if (!chartContainerRef.current) return;
     
     const chart = createChart(chartContainerRef.current, {
-      layout: { background: { color: '#0b0e14' }, textColor: '#6b7280' },
+      layout: { background: { color: '#0b0e14' }, textColor: '#6b7280', attributionLogo: false,},
       grid: { vertLines: { color: '#1a202c' }, horzLines: { color: '#1a202c' } },
       crosshair: { mode: 0 },
       priceScale: { autoScale: true, borderColor: '#232936' },
