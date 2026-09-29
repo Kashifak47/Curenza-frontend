@@ -2,7 +2,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
 import { useTrading } from '../context/TradingContext';
-import { ChevronDown, BarChart2, CandlestickChart, Clock, Maximize } from 'lucide-react';
 
 const TIMEFRAMES = [
   { label: '10S', seconds: 10 },
@@ -12,21 +11,23 @@ const TIMEFRAMES = [
 ];
 
 export const ChartWindow = () => {
-  // NEW: Added positions to the destructuring
   const { selectedPair, quotes, timeframe, setTimeframe, positions } = useTrading();
   
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
   const lastCandleRef = useRef(null);
-  const priceLinesRef = useRef(new Map()); // NEW: Track active entry lines
+  const priceLinesRef = useRef(new Map()); 
+  
+  // ✅ THE FIX: A flag to track if we built the history for this pair yet
+  const hasInitializedData = useRef(false);
 
   // 1. INITIALIZE CHART ONCE
   useEffect(() => {
     if (!chartContainerRef.current) return;
     
     const chart = createChart(chartContainerRef.current, {
-      layout: { background: { color: '#0b0e14' }, textColor: '#6b7280', attributionLogo: false,},
+      layout: { background: { color: '#0b0e14' }, textColor: '#6b7280', attributionLogo: false },
       grid: { vertLines: { color: '#1a202c' }, horzLines: { color: '#1a202c' } },
       crosshair: { mode: 0 },
       priceScale: { autoScale: true, borderColor: '#232936' },
@@ -48,7 +49,9 @@ export const ChartWindow = () => {
         });
       }
     };
-    handleResize();
+    
+    // Tiny delay to ensure flexbox has painted the container
+    setTimeout(handleResize, 50);
 
     const resizeObserver = new ResizeObserver(() => handleResize());
     resizeObserver.observe(chartContainerRef.current);
@@ -59,9 +62,15 @@ export const ChartWindow = () => {
     };
   }, []);
 
-  // 2. LOAD DATA ON PAIR OR TIMEFRAME CHANGE
+  // Reset initialization flag when pair or timeframe changes
   useEffect(() => {
-    if (!seriesRef.current || !chartRef.current || !quotes[selectedPair]) return;
+    hasInitializedData.current = false;
+  }, [selectedPair, timeframe]);
+
+  // 2. LOAD DATA (Waits for first quote to arrive)
+  useEffect(() => {
+    if (hasInitializedData.current) return; // Abort if we already built the history
+    if (!seriesRef.current || !chartRef.current || !quotes[selectedPair]) return; // Wait for quotes!
 
     const currentTf = TIMEFRAMES.find(t => t.label === timeframe) || TIMEFRAMES[0];
     const CANDLE_INTERVAL = currentTf.seconds;
@@ -95,11 +104,15 @@ export const ChartWindow = () => {
     const dataLength = mockData.length;
     chartRef.current.timeScale().setVisibleLogicalRange({ from: dataLength - 60, to: dataLength + 5 });
 
-  }, [selectedPair, timeframe]); 
+    // ✅ MARK AS DONE! So this heavy loop doesn't run on every tick.
+    hasInitializedData.current = true;
+
+  }, [quotes, selectedPair, timeframe]); // ✅ FIX: Added quotes so it re-triggers when data arrives!
 
   // 3. LIVE TICK UPDATES
   useEffect(() => {
-    if (!seriesRef.current || !lastCandleRef.current || !quotes[selectedPair]) return;
+    // Only run if we have successfully built the history
+    if (!hasInitializedData.current || !seriesRef.current || !lastCandleRef.current || !quotes[selectedPair]) return;
     
     const livePrice = quotes[selectedPair].bid;
     const now = Math.floor(Date.now() / 1000);
@@ -123,22 +136,20 @@ export const ChartWindow = () => {
     seriesRef.current.update(lastCandle);
   }, [quotes, selectedPair, timeframe]);
 
-  // 4. NEW: DRAW ENTRY LINES FOR ACTIVE TRADES
+  // 4. DRAW ENTRY LINES FOR ACTIVE TRADES
   useEffect(() => {
     if (!seriesRef.current) return;
 
-    // Clear old lines first
     priceLinesRef.current.forEach(line => seriesRef.current.removePriceLine(line));
     priceLinesRef.current.clear();
 
-    // Draw active positions that match the current chart pair
     positions.forEach(pos => {
       if (pos.symbol === selectedPair) {
         const line = seriesRef.current.createPriceLine({
           price: pos.entryPrice,
-          color: pos.direction === 'UP' ? '#10b981' : '#f43f5e', // Green for UP, Red for DOWN
+          color: pos.direction === 'UP' ? '#10b981' : '#f43f5e', 
           lineWidth: 2,
-          lineStyle: 2, // Dashed line style
+          lineStyle: 2, 
           axisLabelVisible: true,
           title: `${pos.direction} $${pos.amount}`,
         });
@@ -148,7 +159,7 @@ export const ChartWindow = () => {
   }, [positions, selectedPair]);
 
   return (
-    <div className="w-full h-full relative group">
+    <div className="w-full h-full relative group min-h-[300px]">
       <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
         <div className="flex items-center bg-dark-800/80 px-2 py-1 rounded border border-dark-700">
           <span className="font-bold text-xs text-white font-mono">{selectedPair}</span>
@@ -167,7 +178,7 @@ export const ChartWindow = () => {
           ))}
         </div>
       </div>
-      <div ref={chartContainerRef} className="absolute inset-0" />
+      <div ref={chartContainerRef} className="absolute inset-0 h-full w-full" />
     </div>
   );
 };

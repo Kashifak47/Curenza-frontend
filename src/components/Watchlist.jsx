@@ -18,6 +18,9 @@ export const Watchlist = () => {
           
           // Determine flash color class
           const flashClass = data.tick === 'up' ? 'animate-tick-up' : 'animate-tick-down';
+          
+          // FIX: JPY pairs use 3 decimals, others use 5
+          const decimals = symbol.includes("JPY") ? 3 : 5;
 
           return (
             <div key={symbol} onClick={() => setSelectedPair(symbol)} className={`p-3 flex items-center justify-between gap-4 lg:gap-0 cursor-pointer shrink-0 transition-colors ${isSelected ? 'bg-blue-600/10 lg:border-l-2 lg:border-b-0 border-b-2 border-blue-500' : 'hover:bg-dark-900 border-transparent lg:border-l-2 lg:border-b-0 border-b-2'}`}>
@@ -29,12 +32,12 @@ export const Watchlist = () => {
                 </div>
               </div>
               <div className="text-right font-mono text-xs flex flex-col items-end">
-                {/* Applied the key trick and animation class */}
+                {/* Applied the key trick, animation class, and dynamic decimals */}
                 <div key={data.ask} className={`text-emerald-400 px-1 rounded ${flashClass}`}>
-                  {data.ask.toFixed(5)}
+                  {data.ask.toFixed(decimals)}
                 </div>
                 <div key={data.bid} className={`text-rose-500 mt-0.5 px-1 rounded ${flashClass}`}>
-                  {data.bid.toFixed(5)}
+                  {data.bid.toFixed(decimals)}
                 </div>
               </div>
             </div>

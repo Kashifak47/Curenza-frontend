@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, ArrowRight, Zap, Shield, BarChart3, Menu, X, Globe, 
   Smartphone, Lock, CheckCircle, UserPlus, Target, DollarSign, 
-  ChevronDown, Activity, Star, Quote
+  ChevronDown, Activity, Star, Quote, Loader2
 } from 'lucide-react';
 
 // --- Animated Counter ---
@@ -62,11 +62,15 @@ const FadeInWrapper = ({ children, delay = 0 }) => {
   );
 };
 
-export const LandingPage = ({ onLaunch }) => {
+export const LandingPage = ({ onLaunch, onOpenAuth }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [authModal, setAuthModal] = useState(null); 
   const [startCounters, setStartCounters] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+  
+  // --- NEW: Loading State for Terminal Launch ---
+  const [isLaunching, setIsLaunching] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  
   const trustBarRef = useRef(null);
 
   useEffect(() => {
@@ -93,6 +97,28 @@ export const LandingPage = ({ onLaunch }) => {
 
   const toggleFaq = (index) => setOpenFaq(openFaq === index ? null : index);
 
+  // --- NEW: The Magic Launch Sequence ---
+  const handleLaunch = () => {
+    setIsLaunching(true);
+    
+    // Cycle through professional loading texts
+    setTimeout(() => setLoadingStep(1), 600);  // "Connecting to Market Servers..."
+    setTimeout(() => setLoadingStep(2), 1200); // "Allocating $10,000 Demo Funds..."
+    setTimeout(() => setLoadingStep(3), 1800); // "Initializing UI Engine..."
+    
+    // Finally, redirect to terminal after 2.4 seconds
+    setTimeout(() => {
+      onLaunch();
+    }, 2400);
+  };
+
+  const loadingMessages = [
+    "Establishing Secure Connection...",
+    "Connecting to Liquidity Providers...",
+    "Allocating $10,000 Demo Funds...",
+    "Launching Terminal..."
+  ];
+
   const faqs = [
     { q: "What is Fixed-Time Trading?", a: "Fixed-Time Trading involves predicting whether an asset's price will go UP or DOWN within a specific timeframe (e.g., 60 seconds). If your prediction is correct, you earn a fixed payout." },
     { q: "How much is the minimum deposit?", a: "The minimum deposit for a real account is $10. However, you can use our $10,000 Demo Account completely free to practice your strategies." },
@@ -105,36 +131,11 @@ export const LandingPage = ({ onLaunch }) => {
       
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Subtle Tech Grid Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px] opacity-50 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]" />
-        
-        {/* Glowing Orbs */}
         <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] md:w-[700px] md:h-[700px] bg-blue-600/20 blur-[120px] rounded-full animate-float" />
         <div className="absolute top-[20%] right-[-10%] w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-emerald-600/15 blur-[120px] rounded-full animate-float-delayed" />
         <div className="absolute top-[70%] left-[-10%] w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-cyan-600/10 blur-[120px] rounded-full animate-float" />
       </div>
-
-      {/* --- AUTH MODAL --- */}
-      {authModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl px-4 animate-fade-in-down">
-          <div className="bg-gradient-to-b from-[#111827] to-[#030712] border border-white/10 border-t-white/20 p-6 md:p-8 rounded-3xl w-full max-w-md relative shadow-2xl shadow-blue-900/20">
-            <button onClick={() => setAuthModal(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-1.5 rounded-full"><X className="w-5 h-5" /></button>
-            <div className="flex items-center gap-2 mb-6">
-              <TrendingUp className="w-6 h-6 text-blue-500" />
-              <span className="font-bold text-lg">CURENZA<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> FX</span></span>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">{authModal === 'login' ? 'Welcome Back' : 'Create an Account'}</h2>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">Live server connections are being established in Phase 2. For now, please enter the Demo environment.</p>
-            <div className="space-y-4 mb-6">
-              <input type="email" placeholder="Email Address" className="w-full bg-black/50 border border-white/5 rounded-xl p-4 text-white text-sm outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all" />
-              <input type="password" placeholder="Password" className="w-full bg-black/50 border border-white/5 rounded-xl p-4 text-white text-sm outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all" />
-            </div>
-            <button onClick={() => { setAuthModal(null); onLaunch(); }} className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-95 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(56,189,248,0.3)] flex items-center justify-center gap-2">
-              Launch Demo Terminal <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* --- NAVBAR --- */}
       <nav className="relative z-50 flex items-center justify-between px-4 md:px-8 lg:px-12 py-5 bg-[#030712]/80 backdrop-blur-2xl border-b border-white/5 sticky top-0">
@@ -149,8 +150,8 @@ export const LandingPage = ({ onLaunch }) => {
           <button onClick={() => scrollToSection('faq')} className="hover:text-white transition-colors">FAQ</button>
         </div>
         <div className="hidden lg:flex items-center gap-4">
-          <button onClick={() => setAuthModal('login')} className="text-sm font-bold text-gray-300 hover:text-white transition-colors px-4 py-2">Log In</button>
-          <button onClick={() => setAuthModal('signup')} className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-blue-500/20">Sign Up</button>
+          <button onClick={() => onOpenAuth('login')} className="text-sm font-bold text-gray-300 hover:text-white transition-colors px-4 py-2">Log In</button>
+          <button onClick={() => onOpenAuth('signup')} className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-blue-500/20">Sign Up</button>
         </div>
         <button className="lg:hidden p-2 text-gray-300 hover:text-white bg-white/5 rounded-lg active:scale-95 border border-white/5" onClick={() => setIsMobileMenuOpen(true)}>
           <Menu className="w-6 h-6" />
@@ -176,9 +177,10 @@ export const LandingPage = ({ onLaunch }) => {
             <button onClick={() => scrollToSection('faq')} className="text-left hover:text-white hover:pl-2 transition-all">FAQ</button>
           </div>
           <div className="mt-auto flex flex-col gap-3 p-6 border-t border-white/5 bg-white/[0.02]">
-            <button onClick={() => { setIsMobileMenuOpen(false); setAuthModal('login'); }} className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-xl font-bold text-lg active:scale-95 transition-transform">Log In</button>
-            <button onClick={() => { setIsMobileMenuOpen(false); setAuthModal('signup'); }} className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 transition-transform">Sign Up</button>
-            <button onClick={() => { setIsMobileMenuOpen(false); onLaunch(); }} className="w-full mt-2 text-emerald-400 font-bold text-sm py-2">Skip & Try Free Demo →</button>
+            <button onClick={() => { setIsMobileMenuOpen(false); onOpenAuth('login'); }} className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-xl font-bold text-lg active:scale-95 transition-transform">Log In</button>
+            <button onClick={() => { setIsMobileMenuOpen(false); onOpenAuth('signup'); }} className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 transition-transform">Sign Up</button>
+            {/* UPDATED TO USE handleLaunch */}
+            <button onClick={() => { setIsMobileMenuOpen(false); handleLaunch(); }} className="w-full mt-2 text-emerald-400 font-bold text-sm py-2">Skip & Try Free Demo →</button>
           </div>
         </div>
       )}
@@ -212,10 +214,11 @@ export const LandingPage = ({ onLaunch }) => {
         
         <FadeInWrapper delay={450}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto px-4">
-            <button onClick={() => setAuthModal('signup')} className="w-full sm:w-auto group relative flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-500 hover:from-blue-500 hover:to-emerald-400 active:scale-95 text-white px-8 py-4 md:px-10 md:py-4 rounded-xl text-base font-bold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+            <button onClick={() => onOpenAuth('signup')} className="w-full sm:w-auto group relative flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-500 hover:from-blue-500 hover:to-emerald-400 active:scale-95 text-white px-8 py-4 md:px-10 md:py-4 rounded-xl text-base font-bold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
               Create Real Account <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button onClick={onLaunch} className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 text-white px-8 py-4 md:px-10 md:py-4 rounded-xl text-base font-bold transition-all active:scale-95">
+            {/* UPDATED TO USE handleLaunch */}
+            <button onClick={handleLaunch} className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 text-white px-8 py-4 md:px-10 md:py-4 rounded-xl text-base font-bold transition-all active:scale-95">
               Launch $10K Demo
             </button>
           </div>
@@ -223,7 +226,6 @@ export const LandingPage = ({ onLaunch }) => {
       </section>
 
       {/* --- FLOATING TRUST BAR --- */}
-      {/* FIX: Raised up to overlap the hero section perfectly */}
       <div ref={trustBarRef} className="relative z-20 max-w-5xl mx-auto -mt-20 md:-mt-28 mb-16 md:mb-32 px-4">
         <div className="bg-[#111827]/80 backdrop-blur-2xl border border-white/10 border-t-white/20 rounded-3xl p-6 md:p-8 shadow-2xl shadow-blue-900/20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 divide-x-0 md:divide-x divide-white/10 text-center">
           <div className="pb-4 md:pb-0 border-b md:border-b-0 border-white/10">
@@ -324,16 +326,15 @@ export const LandingPage = ({ onLaunch }) => {
                   <li key={i} className="flex items-center gap-3 text-gray-300 font-bold text-sm md:text-base"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /> {item}</li>
                 ))}
               </ul>
-              <button onClick={onLaunch} className="mt-10 w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 border-t-white/20 text-white px-8 py-4 rounded-xl text-base font-bold transition-all active:scale-95 inline-flex justify-center items-center gap-2 shadow-lg shadow-black/20 backdrop-blur-md">
+              {/* UPDATED TO USE handleLaunch */}
+              <button onClick={handleLaunch} className="mt-10 w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 border-t-white/20 text-white px-8 py-4 rounded-xl text-base font-bold transition-all active:scale-95 inline-flex justify-center items-center gap-2 shadow-lg shadow-black/20 backdrop-blur-md">
                 Experience the Terminal <ArrowRight className="w-4 h-4"/>
               </button>
             </FadeInWrapper>
           </div>
           
           <div className="flex-1 w-full max-w-lg lg:max-w-none mx-auto relative">
-            {/* Glowing backdrop for the image */}
             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-blue-500/20 blur-3xl rounded-full scale-90" />
-            
             <FadeInWrapper delay={200}>
               <div className="w-full bg-[#030712] border border-white/10 border-t-white/20 rounded-3xl overflow-hidden shadow-2xl shadow-black aspect-[4/3] flex flex-col relative group">
                  <div className="h-8 md:h-10 border-b border-white/5 flex items-center px-3 md:px-4 gap-2 bg-[#111827]">
@@ -346,7 +347,6 @@ export const LandingPage = ({ onLaunch }) => {
                    <div className="absolute bottom-[30%] left-[35%] w-2 md:w-3 rounded-t h-[40%] bg-emerald-500 group-hover:h-[45%] transition-all duration-500"></div>
                    <div className="absolute bottom-[40%] left-[55%] w-2 md:w-3 rounded-t h-[15%] bg-rose-500 group-hover:h-[10%] transition-all duration-500"></div>
                    <div className="absolute bottom-[25%] left-[75%] w-2 md:w-3 rounded-t h-[50%] bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] group-hover:h-[60%] transition-all duration-500"></div>
-                   
                    <div className="absolute top-3 left-3 md:top-4 md:left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10">
                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                      <span className="text-[10px] md:text-xs font-bold font-mono">EUR/USD</span>
@@ -435,7 +435,7 @@ export const LandingPage = ({ onLaunch }) => {
         <FadeInWrapper>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 md:mb-6 tracking-tight">Ready to Master the Markets?</h2>
           <p className="text-gray-400 text-base md:text-lg mb-8 md:mb-12 max-w-2xl mx-auto px-2">Join over 2 million traders currently maximizing their profits with our lightning-fast terminal.</p>
-          <button onClick={() => setAuthModal('signup')} className="w-full sm:w-auto group relative inline-flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-500 hover:from-blue-500 hover:to-emerald-400 active:scale-95 text-white px-8 py-4 md:px-12 md:py-5 rounded-xl md:rounded-2xl text-base md:text-xl font-bold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] border border-white/10">
+          <button onClick={() => onOpenAuth('signup')} className="w-full sm:w-auto group relative inline-flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-500 hover:from-blue-500 hover:to-emerald-400 active:scale-95 text-white px-8 py-4 md:px-12 md:py-5 rounded-xl md:rounded-2xl text-base md:text-xl font-bold transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] border border-white/10">
             Start Trading Today <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform" />
           </button>
         </FadeInWrapper>
@@ -459,6 +459,40 @@ export const LandingPage = ({ onLaunch }) => {
         </div>
         <p className="text-[#1f2937] text-[10px] md:text-xs">© 2026 Curenza FX. All rights reserved.</p>
       </footer>
+
+      {/* --- NEW: IMMERSIVE FULL-SCREEN LOADER OVERLAY --- */}
+      {isLaunching && (
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-[#030712]/95 backdrop-blur-xl animate-fade-in transition-opacity">
+          
+          {/* Animated Rings */}
+          <div className="relative flex items-center justify-center mb-8">
+            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full" />
+            <div className="w-24 h-24 border-4 border-white/5 border-t-blue-500 rounded-full animate-spin" />
+            <div className="absolute w-16 h-16 border-4 border-white/5 border-b-cyan-400 rounded-full animate-[spin_1.5s_reverse_infinite]" />
+            <TrendingUp className="absolute w-8 h-8 text-white" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-white mb-2 tracking-widest uppercase">
+            CURENZA<span className="text-blue-500"> FX</span>
+          </h2>
+          
+          {/* Dynamic Cycling Text */}
+          <div className="h-6 overflow-hidden flex items-center justify-center mb-4">
+            <p className="text-blue-400 text-sm font-mono animate-pulse text-center">
+              {loadingMessages[loadingStep]}
+            </p>
+          </div>
+
+          {/* Fake Progress Bar */}
+          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-700 ease-out" 
+              style={{ width: `${(loadingStep + 1) * 25}%` }} 
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

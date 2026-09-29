@@ -1,6 +1,7 @@
 // src/components/Navbar.jsx
 import React, { useState } from 'react';
 import { useTrading } from '../context/TradingContext';
+import { useAuth } from '../context/AuthContext'; // NEW: Pull the DB user
 import { 
   TrendingUp, Wallet, ArrowLeft, X, ArrowUpFromLine, 
   History, User, Settings, LogOut, LayoutGrid, ChevronRight 
@@ -9,12 +10,19 @@ import { BankingModal } from './BankingModal';
 
 export const Navbar = ({ onBack }) => {
   const { account } = useTrading();
+  const { user, logout } = useAuth(); // NEW: Grab the real user and the logout function
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [bankingModalType, setBankingModalType] = useState(null);
 
   const openBanking = (type) => {
     setBankingModalType(type);
     setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    onBack(); // Send them back to the landing page
   };
 
   return (
@@ -87,7 +95,7 @@ export const Navbar = ({ onBack }) => {
           {/* Sliding Menu Panel */}
           <div className="relative w-80 max-w-[85vw] h-full bg-[#030712] border-l border-white/10 flex flex-col animate-fade-in-down shadow-2xl overflow-hidden">
             
-            {/* Generic User Profile Header */}
+            {/* User Profile Header using the DB Data! */}
             <div className="p-6 border-b border-white/5 bg-gradient-to-b from-blue-900/10 to-transparent relative">
               <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors bg-white/5 p-1.5 rounded-full">
                 <X className="w-5 h-5" />
@@ -96,13 +104,15 @@ export const Navbar = ({ onBack }) => {
               <div className="flex items-center gap-4 mt-2">
                 <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-emerald-400 p-[2px]">
                   <div className="w-full h-full rounded-full bg-[#0b0e14] flex items-center justify-center border-2 border-[#030712]">
-                    <User className="w-6 h-6 text-gray-400" />
+                    <span className="font-bold text-white text-xl">
+                      {user?.fullName?.charAt(0) || <User className="w-6 h-6 text-gray-400" />}
+                    </span>
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-white font-extrabold text-lg">Demo Trader</h3>
-                  <p className="text-gray-400 text-xs font-medium flex items-center gap-1">
-                    ID: 8492011 <Wallet className="w-3 h-3 text-emerald-500 ml-1"/>
+                  <h3 className="text-white font-extrabold text-lg">{user?.fullName || 'Guest User'}</h3>
+                  <p className="text-gray-400 text-xs font-medium truncate max-w-[150px]">
+                    {user?.email || 'Not logged in'}
                   </p>
                 </div>
               </div>
@@ -151,11 +161,12 @@ export const Navbar = ({ onBack }) => {
             </div>
 
             <div className="p-5 border-t border-white/5 bg-gradient-to-t from-black/20 to-transparent">
+              {/* NOW ACTUALLY CLEARS JWT TOKEN AND LOGS OUT */}
               <button 
-                onClick={onBack}
+                onClick={handleLogout}
                 className="group flex items-center justify-center gap-2 w-full px-4 py-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-all font-bold border border-rose-500/20"
               >
-                <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> Exit Terminal
+                <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> Sign Out
               </button>
             </div>
           </div>

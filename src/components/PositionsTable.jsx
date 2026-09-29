@@ -1,11 +1,14 @@
 // src/components/PositionsTable.jsx
 import React, { useState } from 'react';
 import { useTrading } from '../context/TradingContext';
-import { Clock, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 export const PositionsTable = () => {
   const { positions, tradeHistory } = useTrading();
   const [activeTab, setActiveTab] = useState('open'); 
+
+  // Helper function to format IDs into professional tickets (e.g., 1 -> #TRD-00001)
+  const formatTicket = (id) => `#TRD-${String(id).padStart(5, '0')}`;
 
   return (
     <div className="w-full h-full flex flex-col bg-dark-800">
@@ -45,7 +48,7 @@ export const PositionsTable = () => {
               </tr>
             ) : (
               <tr className="bg-dark-900 text-gray-500 border-b border-dark-700 uppercase text-[10px] lg:text-xs">
-                <th className="p-2 lg:p-3">Time</th>
+                <th className="p-2 lg:p-3">Ticket ID</th>
                 <th className="p-2 lg:p-3">Asset</th>
                 <th className="p-2 lg:p-3 text-center">Direction</th>
                 <th className="p-2 lg:p-3">Amount</th>
@@ -61,14 +64,13 @@ export const PositionsTable = () => {
                 <tr><td colSpan="7" className="text-center py-4 lg:py-8 text-gray-600 text-xs lg:text-sm font-sans">No active trades running</td></tr>
               ) : (
                 positions.map((pos) => {
-                  // Determine if currently winning or losing for color coding
                   let isWinning = false;
                   if (pos.direction === 'UP' && pos.currentPrice > pos.entryPrice) isWinning = true;
                   if (pos.direction === 'DOWN' && pos.currentPrice < pos.entryPrice) isWinning = true;
                   
                   return (
                     <tr key={pos.id} className="hover:bg-dark-900/50 transition-colors">
-                      <td className="p-2 lg:p-3 text-gray-400 font-mono text-xs">{pos.id}</td>
+                      <td className="p-2 lg:p-3 text-gray-400 font-mono text-xs">{formatTicket(pos.id)}</td>
                       <td className="p-2 lg:p-3 font-bold text-white text-xs lg:text-sm">{pos.symbol}</td>
                       <td className="p-2 lg:p-3">
                         <div className={`mx-auto w-16 text-center rounded text-[10px] lg:text-xs font-bold py-0.5 flex items-center justify-center gap-1 ${pos.direction === 'UP' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
@@ -76,7 +78,7 @@ export const PositionsTable = () => {
                           {pos.direction}
                         </div>
                       </td>
-                      <td className="p-2 lg:p-3 text-white font-mono text-xs lg:text-sm">${pos.amount.toFixed(2)}</td>
+                      <td className="p-2 lg:p-3 text-white font-mono text-xs lg:text-sm">${(pos.amount || 0).toFixed(2)}</td>
                       <td className="p-2 lg:p-3 text-gray-400 font-mono text-xs lg:text-sm">{pos.entryPrice}</td>
                       <td className={`p-2 lg:p-3 font-mono font-bold text-xs lg:text-sm ${isWinning ? 'text-emerald-400' : 'text-rose-500'}`}>
                         {pos.currentPrice}
@@ -94,28 +96,28 @@ export const PositionsTable = () => {
               ) : (
                 tradeHistory.map((trade, index) => (
                   <tr key={`${trade.id}-${index}`} className="hover:bg-dark-900/50 transition-colors">
-                    <td className="p-2 lg:p-3 text-gray-400 font-mono text-xs flex items-center gap-1"><Clock className="w-3 h-3"/> {trade.closeTime}</td>
+                    <td className="p-2 lg:p-3 text-gray-400 font-mono text-xs">{formatTicket(trade.id)}</td>
                     <td className="p-2 lg:p-3 font-bold text-white text-xs lg:text-sm">{trade.symbol}</td>
                     <td className="p-2 lg:p-3">
                       <div className={`mx-auto w-16 text-center rounded text-[10px] lg:text-xs font-bold py-0.5 ${trade.direction === 'UP' ? 'text-emerald-500' : 'text-rose-500'}`}>
                         {trade.direction}
                       </div>
                     </td>
-                    <td className="p-2 lg:p-3 text-white font-mono text-xs lg:text-sm">${trade.amount.toFixed(2)}</td>
+                    <td className="p-2 lg:p-3 text-white font-mono text-xs lg:text-sm">${(trade.amount || 0).toFixed(2)}</td>
                     <td className="p-2 lg:p-3 text-gray-300 font-mono text-xs">
-                      {trade.entryPrice} <br/> <span className="text-gray-500">{trade.closePrice}</span>
+                      {trade.entryPrice} <br/> <span className="text-gray-500">{trade.closePrice || "Pending"}</span>
                     </td>
                     <td className="p-2 lg:p-3 text-center">
                       <span className={`text-[10px] font-bold px-2 py-1 rounded ${
-                        trade.result === 'WIN' ? 'bg-emerald-500/20 text-emerald-500' : 
-                        trade.result === 'LOSS' ? 'bg-rose-500/20 text-rose-500' : 
+                        trade.status === 'WIN' ? 'bg-emerald-500/20 text-emerald-500' : 
+                        trade.status === 'LOSS' ? 'bg-rose-500/20 text-rose-500' : 
                         'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {trade.result}
+                        {trade.status}
                       </span>
                     </td>
-                    <td className={`p-2 lg:p-3 text-right font-bold font-mono text-xs lg:text-sm ${trade.profit > 0 ? 'text-emerald-500' : trade.profit < 0 ? 'text-rose-500' : 'text-gray-400'}`}>
-                      {trade.profit > 0 ? '+' : ''}${trade.profit.toFixed(2)}
+                    <td className={`p-2 lg:p-3 text-right font-bold font-mono text-xs lg:text-sm ${(trade.profitAmount || 0) > 0 ? 'text-emerald-500' : (trade.profitAmount || 0) < 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+                      {(trade.profitAmount || 0) > 0 ? '+' : ''}${(trade.profitAmount || 0).toFixed(2)}
                     </td>
                   </tr>
                 ))
