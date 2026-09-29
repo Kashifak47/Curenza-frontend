@@ -1,6 +1,7 @@
 // src/components/ChartWindow.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
+import { Loader2 } from 'lucide-react';
 import { useTrading } from '../context/TradingContext';
 
 const TIMEFRAMES = [
@@ -13,13 +14,15 @@ const TIMEFRAMES = [
 export const ChartWindow = () => {
   const { selectedPair, quotes, timeframe, setTimeframe, positions } = useTrading();
   
+  // ✅ ADDED: Loading state for the UI
+  const [isLoading, setIsLoading] = useState(true);
+  
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
   const lastCandleRef = useRef(null);
   const priceLinesRef = useRef(new Map()); 
   
-  // ✅ THE FIX: A flag to track if we built the history for this pair yet
   const hasInitializedData = useRef(false);
 
   // 1. INITIALIZE CHART ONCE
@@ -50,7 +53,6 @@ export const ChartWindow = () => {
       }
     };
     
-    // Tiny delay to ensure flexbox has painted the container
     setTimeout(handleResize, 50);
 
     const resizeObserver = new ResizeObserver(() => handleResize());
@@ -62,15 +64,16 @@ export const ChartWindow = () => {
     };
   }, []);
 
-  // Reset initialization flag when pair or timeframe changes
+  // ✅ Reset initialization flag AND trigger loader when pair or timeframe changes
   useEffect(() => {
     hasInitializedData.current = false;
+    setIsLoading(true);
   }, [selectedPair, timeframe]);
 
   // 2. LOAD DATA (Waits for first quote to arrive)
   useEffect(() => {
-    if (hasInitializedData.current) return; // Abort if we already built the history
-    if (!seriesRef.current || !chartRef.current || !quotes[selectedPair]) return; // Wait for quotes!
+    if (hasInitializedData.current) return; 
+    if (!seriesRef.current || !chartRef.current || !quotes[selectedPair]) return; 
 
     const currentTf = TIMEFRAMES.find(t => t.label === timeframe) || TIMEFRAMES[0];
     const CANDLE_INTERVAL = currentTf.seconds;
@@ -104,14 +107,13 @@ export const ChartWindow = () => {
     const dataLength = mockData.length;
     chartRef.current.timeScale().setVisibleLogicalRange({ from: dataLength - 60, to: dataLength + 5 });
 
-    // ✅ MARK AS DONE! So this heavy loop doesn't run on every tick.
     hasInitializedData.current = true;
+    setIsLoading(false); // ✅ Hide the loader once data is painted
 
-  }, [quotes, selectedPair, timeframe]); // ✅ FIX: Added quotes so it re-triggers when data arrives!
+  }, [quotes, selectedPair, timeframe]); 
 
   // 3. LIVE TICK UPDATES
   useEffect(() => {
-    // Only run if we have successfully built the history
     if (!hasInitializedData.current || !seriesRef.current || !lastCandleRef.current || !quotes[selectedPair]) return;
     
     const livePrice = quotes[selectedPair].bid;
@@ -160,7 +162,9 @@ export const ChartWindow = () => {
 
   return (
     <div className="w-full h-full relative group min-h-[300px]">
-      <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
+      
+      {/* Top Bar Navigation */}
+      <div className="absolute top-2 left-2 z-30 flex items-center gap-2">
         <div className="flex items-center bg-dark-800/80 px-2 py-1 rounded border border-dark-700">
           <span className="font-bold text-xs text-white font-mono">{selectedPair}</span>
         </div>
@@ -178,6 +182,18 @@ export const ChartWindow = () => {
           ))}
         </div>
       </div>
+
+      {/* ✅ LOADER OVERLAY */}
+      {isLoading && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0b0e14] rounded-lg">
+          <Loader2 className="animate-spin text-blue-500 mb-3" size={36} />
+          <span className="text-gray-400 font-mono text-xs tracking-widest animate-pulse">
+            CONNECTING TO MARKET...
+          </span>
+        </div>
+      )}
+
+      {/* Actual Chart Container */}
       <div ref={chartContainerRef} className="absolute inset-0 h-full w-full" />
     </div>
   );
