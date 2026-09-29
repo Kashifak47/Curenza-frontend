@@ -6,7 +6,9 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
-
-  ],
+    tailwindcss(),],
+  define: {
+    // This fixes the SockJS production bug
+    global: 'window',
+  },
 })
